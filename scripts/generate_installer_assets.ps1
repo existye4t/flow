@@ -145,10 +145,15 @@ $sf.LineAlignment = [System.Drawing.StringAlignment]::Center
 $sbG.DrawString("Exist Flow", $fontTitle, $brushTitle, (New-Object System.Drawing.RectangleF(0, ($iconY + $iconBoxSize + 16), $sbWidth, 24)), $sf)
 $sbG.DrawString("Everything, one shortcut away.", $fontSub, $brushSub, (New-Object System.Drawing.RectangleF(8, ($iconY + $iconBoxSize + 42), ($sbWidth - 16), 32)), $sf)
 
+$pkgPath = Join-Path $PSScriptRoot "..\package.json"
+$pkg = Get-Content $pkgPath -Raw | ConvertFrom-Json
+$appVersion = $pkg.version
+Write-Host "Using package.json version: v$appVersion" -ForegroundColor Cyan
+
 # Bottom decorative badge
 $fontVer = New-Object System.Drawing.Font("Segoe UI", 7.0, [System.Drawing.FontStyle]::Regular, [System.Drawing.GraphicsUnit]::Point)
 $brushVer = New-Object System.Drawing.SolidBrush($COLOR_SECONDARY)
-$sbG.DrawString("v0.1.0  |  MIT License", $fontVer, $brushVer, (New-Object System.Drawing.RectangleF(0, ($sbHeight - 26), $sbWidth, 18)), $sf)
+$sbG.DrawString("v$appVersion  |  MIT License", $fontVer, $brushVer, (New-Object System.Drawing.RectangleF(0, ($sbHeight - 26), $sbWidth, 18)), $sf)
 
 $fontTitle.Dispose()
 $fontSub.Dispose()
@@ -161,8 +166,20 @@ $sbG.Dispose()
 
 $sidebarBmpPath = Join-Path $installerDir "sidebar.bmp"
 $sbBmp.Save($sidebarBmpPath, [System.Drawing.Imaging.ImageFormat]::Bmp)
-$sbBmp.Dispose()
 Write-Host "Created: $sidebarBmpPath" -ForegroundColor Green
+
+# Save PNG check preview for visual verification
+$checkPngPath = Join-Path $assetsDir "installer-sidebar-check.png"
+$sbBmp.Save($checkPngPath, [System.Drawing.Imaging.ImageFormat]::Png)
+Write-Host "Created check preview: $checkPngPath" -ForegroundColor Green
+
+$brainArtifactDir = "C:\Users\Exist\.gemini\antigravity-ide\brain\1b6ee9c5-0f92-408f-84ba-afbd9c1a5360"
+if (Test-Path $brainArtifactDir) {
+    $brainPngPath = Join-Path $brainArtifactDir "installer-sidebar-check.png"
+    $sbBmp.Save($brainPngPath, [System.Drawing.Imaging.ImageFormat]::Png)
+}
+
+$sbBmp.Dispose()
 
 # -----------------------------------------------------------------------------
 # 3. GENERATE assets/installer/header.bmp (150 x 57 px, 24-bit BMP)
@@ -198,37 +215,24 @@ $hdrBmp.Dispose()
 Write-Host "Created: $headerBmpPath" -ForegroundColor Green
 
 # -----------------------------------------------------------------------------
-# 4. GENERATE assets/installer/installer.nsh
+# 4. PRESERVE or GENERATE assets/installer/installer.nsh
 # -----------------------------------------------------------------------------
-Write-Host "Generating assets/installer/installer.nsh..." -ForegroundColor Cyan
-
-$nshContent = @"
+$nshPath = Join-Path $installerDir "installer.nsh"
+if (-not (Test-Path $nshPath)) {
+    Write-Host "Generating initial assets/installer/installer.nsh..." -ForegroundColor Cyan
+    $nshContent = @"
 ; Exist Flow - NSIS Custom Dark Theme Script
-; Palette derived from src/renderer/styles/global.css
-;
-; Background: #08090A (0x08090A)
-; Surface:    #111214 (0x111214)
-; Text:       #FAFAFA (0xFAFAFA)
-; Muted:      #8A8D93 (0x8A8D93)
-; Accent:     #E8E8E8 (0xE8E8E8)
-
 !define MUI_BGCOLOR "08090A"
 !define MUI_TEXTCOLOR "FAFAFA"
-
 !macro customHeader
-  ; Sets the default UI font to Segoe UI (standard Windows sans font)
   SetFont "Segoe UI" 9
 !macroend
-
 !macro customGUIInit
-  ; Note on standard Win32 dialog controls:
-  ; Standard Windows NSIS dialog controls (buttons, checkboxes, edit fields)
-  ; retain the native Windows UxTheme renderer; background color and fonts
-  ; are applied across the welcome header and branding areas.
 !macroend
 "@
-
-$nshPath = Join-Path $installerDir "installer.nsh"
-$nshContent | Set-Content $nshPath -Encoding UTF8
-Write-Host "Created: $nshPath" -ForegroundColor Green
+    $nshContent | Set-Content $nshPath -Encoding UTF8
+    Write-Host "Created: $nshPath" -ForegroundColor Green
+} else {
+    Write-Host "Preserved existing installer.nsh: $nshPath" -ForegroundColor Green
+}
 Write-Host "`nAll installer assets generated successfully!" -ForegroundColor Cyan

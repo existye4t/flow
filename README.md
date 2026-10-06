@@ -12,11 +12,11 @@ Exist Flow is a fast, keyboard-first command launcher and workspace manager for 
 
 Exist Flow Windows için iki farklı dağıtım biçiminde sunulur:
 
-1. **NSIS Installer (`Exist Flow Setup 0.1.0.exe`)**:
+1. **NSIS Installer (`Exist Flow Setup 0.1.1.exe`)**:
    - Kurulum sihirbazı ile yükleme konumu seçilebilir (`allowToChangeInstallationDirectory: true`).
    - Masaüstü ve Başlat Menüsü kısayollarını otomatik olarak oluşturur.
    - Denetim Masası / Ayarlar üzerinden temiz bir şekilde kaldırılabilir.
-2. **Portable Executable (`Exist Flow 0.1.0.exe`)**:
+2. **Portable Executable (`Exist Flow 0.1.1.exe`)**:
    - Kurulum gerektirmez; USB bellekten veya doğrudan indirilen klasörden tek tıkla çalıştırılabilir.
    - Yapılandırma verilerini yerel kullanıcı profilinde (`%APPDATA%\exist-flow`) depolar.
 

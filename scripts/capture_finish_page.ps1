@@ -113,10 +113,38 @@ Write-Host "Launching installer: $installerPath" -ForegroundColor Cyan
 $proc = Start-Process -FilePath $installerPath -PassThru
 
 try {
-    # 1. Wait for installer window
+    # 1. Wait for installer window (or handle reinstall prompt MessageBox if shown)
     $hWnd = [IntPtr]::Zero
-    for ($i = 0; $i -lt 40; $i++) {
-        Start-Sleep -Milliseconds 250
+    for ($i = 0; $i -lt 50; $i++) {
+        Start-Sleep -Milliseconds 300
+        # Check for MessageBox dialog
+        [Win32Finish]::EnumWindows({
+            param($h, $l)
+            if ([Win32Finish]::IsWindowVisible($h)) {
+                $sbCls = New-Object System.Text.StringBuilder 128
+                [Win32Finish]::GetClassName($h, $sbCls, 128) | Out-Null
+                if ($sbCls.ToString() -eq "#32770") {
+                    $children = [Win32Finish]::GetChildWindows($h)
+                    foreach ($c in $children) {
+                        $txt = [Win32Finish]::GetText($c)
+                        if ($txt -match "zaten yüklü|kaldırılıp|Exist Flow") {
+                            # Click IDYES (6)
+                            Write-Host "Found prompt dialog, clicking 'Evet'..." -ForegroundColor Yellow
+                            $btnYes = [Win32Finish]::GetDlgItem($h, 6)
+                            if ($btnYes -ne [IntPtr]::Zero) {
+                                [Win32Finish]::SendMessage($btnYes, [Win32Finish]::BM_CLICK, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+                            } else {
+                                $btn1 = [Win32Finish]::GetDlgItem($h, 1)
+                                [Win32Finish]::SendMessage($btn1, [Win32Finish]::BM_CLICK, [IntPtr]::Zero, [IntPtr]::Zero) | Out-Null
+                            }
+                            return $false
+                        }
+                    }
+                }
+            }
+            return $true
+        }, [IntPtr]::Zero) | Out-Null
+
         $hWnd = [Win32Finish]::FindInstallerWindow()
         if ($hWnd -ne [IntPtr]::Zero) { break }
     }
