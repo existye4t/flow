@@ -1,7 +1,7 @@
 {
   "name": "exist-flow",
   "type": "commonjs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Your desktop, one shortcut away.",
   "author": "Exist",
   "license": "MIT",
@@ -20,7 +20,9 @@
     "probe:capture": "electron scripts/probe_capture_sources.js",
     "probe:timing": "electron scripts/probe_capture_timing.js",
     "test:tour10": "electron scripts/test_tour10.js",
-    "test:cursor": "electron scripts/test_cursor_bug.js"
+    "test:cursor": "electron scripts/test_cursor_bug.js",
+    "test:screenshot-toggle": "electron scripts/test_screenshot_toggle.js",
+    "test:tour17": "electron scripts/test_tour17_item_types.js"
   },
   "dependencies": {
     "electron-store": "^8.1.0",

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useFlowStore } from '@renderer/store/flow-store'
 import { FlowItem, Project } from '@shared/types'
-import { IconGlyph } from '@renderer/utils/icons'
+import { IconGlyph, ItemTypeIcon } from '@renderer/utils/icons'
 import { isValidShortcutInput, formatBadgeShortcut } from '@renderer/utils/platform'
 import { useSettings } from '@renderer/store/settings-store'
 import ConfirmDialog from './ConfirmDialog'
@@ -226,8 +226,11 @@ export default function ProjectsView({ onSelectFlowItem, onOpenAddFlow }: Projec
                         <IconGlyph name={item.type === 'website' ? 'globe' : 'app'} size={14} className="text-flow-muted" />
                       </div>
                       <div className="truncate min-w-0">
-                        <div className="text-[13px] font-medium text-flow-primary leading-tight truncate">
-                          {item.name}
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <ItemTypeIcon item={item} />
+                          <div className="text-[13px] font-medium text-flow-primary leading-tight truncate">
+                            {item.name}
+                          </div>
                         </div>
                         {item.description && (
                           <div className="text-[11px] text-flow-muted leading-tight truncate mt-0.5">
@@ -473,7 +476,10 @@ export default function ProjectsView({ onSelectFlowItem, onOpenAddFlow }: Projec
                       <div className="flex h-6 w-6 items-center justify-center rounded bg-flow-bg-elevated border border-flow-border">
                         <IconGlyph name={item.type === 'website' ? 'globe' : 'app'} size={12} className="text-flow-muted" />
                       </div>
-                      <span className="text-xs text-flow-primary truncate">{item.name}</span>
+                      <div className="flex items-center gap-1.5 truncate">
+                        <ItemTypeIcon item={item} />
+                        <span className="text-xs text-flow-primary truncate">{item.name}</span>
+                      </div>
                     </div>
                     <span className="text-[10px] text-flow-muted uppercase tracking-wider">{item.type}</span>
                   </div>

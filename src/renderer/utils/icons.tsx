@@ -1,6 +1,10 @@
 import React from 'react'
 import { FlowItem, IconSource, FlowItemType } from '@shared/types'
 import { toMonochrome, getMonochromeCached, MONO_VERSION } from './monochrome'
+import { getItemTargetCategory, ItemTargetCategory } from './itemCategory'
+
+export { getItemTargetCategory }
+export type { ItemTargetCategory }
 
 export function getTypeGlyph(type: FlowItemType): string {
   switch (type) {
@@ -468,6 +472,96 @@ const glyphComponents: Record<string, React.FC<GlyphProps>> = {
 export function IconGlyph({ name, size = 20, className = '' }: { name: string; size?: number; className?: string }) {
   const G = glyphComponents[name] || glyphComponents.file
   return <G size={size} className={`text-flow-secondary ${className}`} />
+}
+
+/* ------------------ Item Type Target Icons (Tour 17) ------------------ */
+
+export function AppTypeIcon({ size = 13.5, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      role="img"
+      aria-label="Uygulama"
+    >
+      <title>Uygulama</title>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+    </svg>
+  )
+}
+
+export function WebsiteTypeIcon({ size = 13.5, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      role="img"
+      aria-label="Web sitesi"
+    >
+      <title>Web sitesi</title>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M3.5 12h17" />
+      <path d="M12 3.5c2.2 2.3 3.2 5.2 3.2 8.5s-1 6.2-3.2 8.5c-2.2-2.3-3.2-5.2-3.2-8.5s1-6.2 3.2-8.5z" />
+    </svg>
+  )
+}
+
+export function FolderTypeIcon({ size = 13.5, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      role="img"
+      aria-label="Klasör"
+    >
+      <title>Klasör</title>
+      <path d="M20 19A1.5 1.5 0 0 0 21.5 17.5v-8A1.5 1.5 0 0 0 20 8h-7.6a1.5 1.5 0 0 1-1.27-.72l-1.02-1.53A1.5 1.5 0 0 0 8.84 5H4A1.5 1.5 0 0 0 2.5 6.5v11A1.5 1.5 0 0 0 4 19h16z" />
+    </svg>
+  )
+}
+
+export function ItemTypeIcon({
+  item,
+  size = 13.5,
+  className = '',
+}: {
+  item: { type?: string; kind?: string; target?: string }
+  size?: number
+  className?: string
+}) {
+  const category = getItemTargetCategory(item)
+  const combinedClass = `flex-shrink-0 text-flow-muted ${className}`.trim()
+  switch (category) {
+    case 'website':
+      return <WebsiteTypeIcon size={size} className={combinedClass} />
+    case 'folder':
+      return <FolderTypeIcon size={size} className={combinedClass} />
+    case 'app':
+    default:
+      return <AppTypeIcon size={size} className={combinedClass} />
+  }
 }
 
 export function IconRenderer({

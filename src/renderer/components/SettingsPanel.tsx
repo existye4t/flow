@@ -186,15 +186,21 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
   }, [settings.settingsShortcut])
 
   useEffect(() => {
+    if (!settings.screenshotEnabled) {
+      setScreenshotShortcutError(null)
+      return
+    }
     window.electron?.settings
       .getScreenshotShortcutStatus?.()
       .then((status) => {
-        if (status && !status.registered && settings.screenshotShortcut) {
+        if (status && !status.registered && status.enabled !== false && settings.screenshotShortcut) {
           setScreenshotShortcutError('Shortcut registration failed (claimed by OS or another app)')
+        } else if (status?.registered) {
+          setScreenshotShortcutError(null)
         }
       })
       .catch(() => {})
-  }, [settings.screenshotShortcut])
+  }, [settings.screenshotShortcut, settings.screenshotEnabled])
 
   const applyGlobalShortcut = async (value: string) => {
     const trimmed = value.trim()
@@ -530,10 +536,12 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
           <SettingsRow
             label="Shortcut"
             hint={
-              screenshotShortcutError ||
-              (settings.screenshotShortcut
-                ? `Triggers screenshot capture — ${formatRawShortcut(settings.screenshotShortcut)}`
-                : 'No shortcut configured')
+              !settings.screenshotEnabled
+                ? 'Disabled'
+                : screenshotShortcutError ||
+                  (settings.screenshotShortcut
+                    ? `Triggers screenshot capture — ${formatRawShortcut(settings.screenshotShortcut)}`
+                    : 'No shortcut configured')
             }
           >
             <ShortcutRecorder
@@ -593,6 +601,22 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
           </SettingsRow>
           <SettingsRow label="Copy to clipboard" hint="Places captured region into clipboard">
             <Toggle checked={settings.screenshotCopy} onChange={(v) => set('screenshotCopy', v)} />
+          </SettingsRow>
+          <SettingsRow
+            label="Enable screenshot"
+            hint={
+              settings.screenshotEnabled
+                ? 'Print Screen hotkey and region capture are active'
+                : 'Screenshot hotkey and capture are disabled'
+            }
+          >
+            <Toggle
+              checked={settings.screenshotEnabled ?? true}
+              onChange={(v) => {
+                set('screenshotEnabled', v)
+                void window.electron?.settings?.setScreenshotEnabled?.(v)
+              }}
+            />
           </SettingsRow>
           <SettingsRow
             label="Capture mouse cursor"

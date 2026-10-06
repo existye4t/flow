@@ -1,7 +1,7 @@
 import { FlowItem } from '@shared/types'
 import FlowItemMenu from '@renderer/components/FlowItemMenu'
 import { useFlowStore } from '@renderer/store/flow-store'
-import { IconRenderer } from '@renderer/utils/icons'
+import { IconRenderer, ItemTypeIcon } from '@renderer/utils/icons'
 import { getItemActions, ActionContext, ItemAction } from '@renderer/actions/itemActions'
 import { formatBadgeShortcut } from '@renderer/utils/platform'
 
@@ -91,14 +91,17 @@ export default function FlowItemRow({
 
         {/* Content */}
         <div className="min-w-0 flex-1">
-          <p
-            className={[
-              'truncate text-[13px] leading-[1.3] tracking-[-0.01em]',
-              isSelected ? 'text-flow-primary font-medium' : 'text-flow-secondary font-regular',
-            ].join(' ')}
-          >
-            {item.name}
-          </p>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <ItemTypeIcon item={item} />
+            <p
+              className={[
+                'truncate text-[13px] leading-[1.3] tracking-[-0.01em]',
+                isSelected ? 'text-flow-primary font-medium' : 'text-flow-secondary font-regular',
+              ].join(' ')}
+            >
+              {item.name}
+            </p>
+          </div>
           {item.description && (
             <p className="mt-0.5 truncate text-[11px] leading-[1.3] tracking-[0.002em] text-flow-muted">
               {item.description}

@@ -56,6 +56,7 @@ export interface AppSettings {
   actionShortcut: string
   showShortcutHints: boolean
   // Screenshot
+  screenshotEnabled: boolean
   screenshotShortcut: string
   screenshotBehavior: 'review' | 'instant'
   screenshotAutoSave: boolean
@@ -81,6 +82,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   settingsShortcut: 'ctrl+,',
   actionShortcut: 'ctrl+k',
   showShortcutHints: true,
+  screenshotEnabled: true,
   screenshotShortcut: 'Print Screen',
   screenshotBehavior: 'review',
   screenshotAutoSave: true,
@@ -164,7 +166,8 @@ export interface ElectronAPI {
     setSettingsShortcut: (input: string) => Promise<{ success: boolean; error?: string }>
     getSettingsShortcutStatus: () => Promise<{ registered: boolean; accelerator: string; configured: string; error?: string | null }>
     setScreenshotShortcut: (input: string) => Promise<{ success: boolean; error?: string }>
-    getScreenshotShortcutStatus: () => Promise<{ registered: boolean; accelerator: string }>
+    getScreenshotShortcutStatus: () => Promise<{ registered: boolean; accelerator: string; enabled?: boolean }>
+    setScreenshotEnabled?: (enabled: boolean) => Promise<{ success: boolean }>
     setLaunchAtStartup: (enabled: boolean) => Promise<{ success: boolean }>
     getLaunchAtStartup: () => Promise<boolean>
     setTray: (enabled: boolean) => Promise<{ success: boolean }>

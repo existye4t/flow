@@ -56,7 +56,8 @@ export interface ElectronAPI {
     setSettingsShortcut: (input: string) => Promise<{ success: boolean; error?: string }>
     getSettingsShortcutStatus: () => Promise<{ registered: boolean; accelerator: string; configured: string; error?: string | null }>
     setScreenshotShortcut: (input: string) => Promise<{ success: boolean; error?: string }>
-    getScreenshotShortcutStatus: () => Promise<{ registered: boolean; accelerator: string }>
+    getScreenshotShortcutStatus: () => Promise<{ registered: boolean; accelerator: string; enabled?: boolean }>
+    setScreenshotEnabled: (enabled: boolean) => Promise<{ success: boolean }>
     setLaunchAtStartup: (enabled: boolean) => Promise<{ success: boolean }>
     getLaunchAtStartup: () => Promise<boolean>
     setTray: (enabled: boolean) => Promise<{ success: boolean }>
@@ -131,6 +132,7 @@ const api: ElectronAPI = {
     getSettingsShortcutStatus: () => ipcRenderer.invoke('settings:get-settings-shortcut-status'),
     setScreenshotShortcut: (input) => ipcRenderer.invoke('settings:set-screenshot-shortcut', input),
     getScreenshotShortcutStatus: () => ipcRenderer.invoke('settings:get-screenshot-shortcut-status'),
+    setScreenshotEnabled: (enabled: boolean) => ipcRenderer.invoke('settings:set-screenshot-enabled', enabled),
     setLaunchAtStartup: (enabled) => ipcRenderer.invoke('settings:set-launch-at-login', enabled),
     getLaunchAtStartup: () => ipcRenderer.invoke('settings:get-launch-at-login'),
     setTray: (enabled) => ipcRenderer.invoke('settings:set-tray', enabled),

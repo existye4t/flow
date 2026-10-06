@@ -1093,6 +1093,46 @@ function destroyTray() {
 
 /* ---------------------------- Shortcuts -------------------------------- */
 
+function syncScreenshotShortcut(): void {
+  const screenshotEnabled = getSetting<boolean>('screenshotEnabled', true)
+
+  if (screenshotAccelerator) {
+    try {
+      globalShortcut.unregister(screenshotAccelerator)
+    } catch {
+      // ignore
+    }
+    screenshotAccelerator = ''
+  }
+
+  if (!screenshotEnabled) {
+    screenshotRegistrationFailed = false
+    console.log('[Main] Screenshot shortcut unregistered (screenshotEnabled: false)')
+    return
+  }
+
+  const screenshotPreferred = getSetting<string>('screenshotShortcut', 'Print Screen')
+  const screenshotAcc = toAccelerator(screenshotPreferred) || 'PrintScreen'
+  let screenshotOk = false
+  try {
+    screenshotOk = globalShortcut.register(screenshotAcc, () => {
+      void startScreenshot()
+    })
+  } catch (err) {
+    console.error(`[Main] Screenshot shortcut registration error for "${screenshotPreferred}" (${screenshotAcc}):`, err)
+    screenshotOk = false
+  }
+  if (screenshotOk) {
+    screenshotAccelerator = screenshotAcc
+    screenshotRegistrationFailed = false
+    console.log(`[Main] Screenshot shortcut registered: "${screenshotPreferred}" (${screenshotAcc})`)
+  } else {
+    screenshotAccelerator = ''
+    screenshotRegistrationFailed = true
+    console.warn(`[Main] Screenshot shortcut "${screenshotPreferred}" (${screenshotAcc}) unavailable`)
+  }
+}
+
 function registerShortcuts() {
   if (currentAccelerator) {
     try { globalShortcut.unregister(currentAccelerator) } catch {}
@@ -1154,27 +1194,8 @@ function registerShortcuts() {
     console.warn(`[Main] Settings shortcut "${settingsPreferred}" (${settingsAcc}) unavailable`)
   }
 
-  // 3. Global screenshot shortcut (Print Screen by default) — user configurable
-  const screenshotPreferred = getSetting<string>('screenshotShortcut', 'Print Screen')
-  const screenshotAcc = toAccelerator(screenshotPreferred) || 'PrintScreen'
-  let screenshotOk = false
-  try {
-    screenshotOk = globalShortcut.register(screenshotAcc, () => {
-      void startScreenshot()
-    })
-  } catch (err) {
-    console.error(`[Main] Screenshot shortcut registration error for "${screenshotPreferred}" (${screenshotAcc}):`, err)
-    screenshotOk = false
-  }
-  if (screenshotOk) {
-    screenshotAccelerator = screenshotAcc
-    screenshotRegistrationFailed = false
-    console.log(`[Main] Screenshot shortcut registered: "${screenshotPreferred}" (${screenshotAcc})`)
-  } else {
-    screenshotAccelerator = ''
-    screenshotRegistrationFailed = true
-    console.warn(`[Main] Screenshot shortcut "${screenshotPreferred}" (${screenshotAcc}) unavailable`)
-  }
+  // 3. Global screenshot shortcut (Print Screen by default) — user configurable, respects screenshotEnabled
+  syncScreenshotShortcut()
 
   // Development only: explicit DevTools toggle (never automatic).
   if (!app.isPackaged && process.env.VITE_DEV_SERVER_URL) {
@@ -1494,6 +1515,12 @@ function logAvailableSources(sources: Electron.DesktopCapturerSource[], displays
 }
 
 async function startScreenshot(options?: { displayId?: number | string; point?: { x: number; y: number } }) {
+  const screenshotEnabled = getSetting<boolean>('screenshotEnabled', true)
+  if (!screenshotEnabled) {
+    console.log('[Main] startScreenshot skipped: screenshotEnabled is false')
+    return { success: false, error: 'Screenshot is disabled' }
+  }
+
   const runId = ++screenshotRunSeq
   currentScreenshotRun = {
     id: runId,
@@ -1672,9 +1699,11 @@ async function startScreenshot(options?: { displayId?: number | string; point?: 
       captureWin.webContents.send('screenshot:capture-ready', captureJpegBuffer)
       markScreenshot('ipc-sent')
     }
+    return { success: true }
   } catch (err) {
     console.error('[Main] Screenshot capture failed:', err)
     sendFailure(err instanceof Error ? err.message : String(err))
+    return { success: false, error: err instanceof Error ? err.message : String(err) }
   }
 }
 
@@ -1848,6 +1877,15 @@ ipcMain.handle('store:get', (_event, key?: string) => {
 
 ipcMain.handle('store:set', (_event, key: string, value: unknown) => {
   store.set(key, value)
+  if (key === 'settings' || key === 'settings.screenshotEnabled' || key === 'settings.screenshotShortcut') {
+    syncScreenshotShortcut()
+  }
+})
+
+ipcMain.handle('settings:set-screenshot-enabled', (_event, enabled: boolean) => {
+  store.set('settings.screenshotEnabled', Boolean(enabled))
+  syncScreenshotShortcut()
+  return { success: true }
 })
 
 ipcMain.handle('store:delete', (_event, key: string) => {
@@ -2484,9 +2522,11 @@ ipcMain.handle('settings:set-settings-shortcut', (_event, input: string) => {
 })
 
 ipcMain.handle('settings:get-screenshot-shortcut-status', () => {
+  const screenshotEnabled = getSetting<boolean>('screenshotEnabled', true)
   return {
-    registered: !screenshotRegistrationFailed && Boolean(screenshotAccelerator),
+    registered: screenshotEnabled && !screenshotRegistrationFailed && Boolean(screenshotAccelerator),
     accelerator: screenshotAccelerator,
+    enabled: screenshotEnabled,
   }
 })
 
@@ -2532,6 +2572,13 @@ ipcMain.handle('settings:set-screenshot-shortcut', (_event, input: string) => {
     } catch {
       // ignore
     }
+  }
+
+  const screenshotEnabled = getSetting<boolean>('screenshotEnabled', true)
+  if (!screenshotEnabled) {
+    screenshotAccelerator = ''
+    screenshotRegistrationFailed = false
+    return { success: true }
   }
 
   let ok = false
@@ -2716,8 +2763,7 @@ ipcMain.handle('data:import', async () => {
 /* ---------------------------- Screenshot ------------------------------- */
 
 ipcMain.handle('screenshot:start', async (_event, options?: { displayId?: number | string; point?: { x: number; y: number } }) => {
-  await startScreenshot(options)
-  return { success: true }
+  return await startScreenshot(options)
 })
 
 ipcMain.handle('screenshot:get-data', () => {
